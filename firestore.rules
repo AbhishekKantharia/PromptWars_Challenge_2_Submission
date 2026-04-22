@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Chat History: Users can only read/write their own chat logs
+    match /chatHistory/{docId} {
+      allow read, create: if isOwner(request.resource.data.userId);
+      allow update, delete: if false; // Chats are immutable
+    }
+
+    // Quiz Scores: Users can write their own scores, everyone can read for leaderboard
+    match /quizScores/{docId} {
+      allow create: if isOwner(request.resource.data.userId) 
+                    && request.resource.data.score >= 0 
+                    && request.resource.data.score <= request.resource.data.total;
+      allow read: if true; // Public for analytics/leaderboard
+      allow update, delete: if false; // Scores are immutable
+    }
+
+    // Leaderboard: Public read, users can only update their own record
+    match /leaderboard/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+    
+    // Checklist Progress: Users can only read/write their own progress
+    match /checklistProgress/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
