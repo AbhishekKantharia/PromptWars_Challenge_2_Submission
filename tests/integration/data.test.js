@@ -6,8 +6,8 @@ describe('Integration Tests', () => {
     let electionData;
 
     beforeAll(() => {
-      const dataPath = path.join(__dirname, '..', 'src', 'data', 'election-data.json');
-      const data = fs.readFileSync(dataPath, 'utf-8');
+      const dataPath = './src/data/election-data.json';
+      const data = fs.readFileSync(path.join(process.cwd(), dataPath), 'utf-8');
       electionData = JSON.parse(data);
     });
 
@@ -25,16 +25,22 @@ describe('Integration Tests', () => {
       expect(electionData.quiz.questions.length).toBeGreaterThan(10);
     });
 
-    test('should have valid glossary terms', () => {
+test('should have valid glossary terms', () => {
       expect(electionData).toHaveProperty('glossary');
-      expect(electionData.glossary).toHaveProperty('terms');
-      expect(Array.isArray(electionData.glossary.terms)).toBe(true);
+      expect(Array.isArray(electionData.glossary)).toBe(true);
+      expect(electionData.glossary.length).toBeGreaterThan(5);
     });
 
     test('should have valid checklist items', () => {
       expect(electionData).toHaveProperty('checklist');
-      expect(electionData.checklist).toHaveProperty('items');
-      expect(Array.isArray(electionData.checklist.items)).toBe(true);
+      expect(Array.isArray(electionData.checklist)).toBe(true);
+      expect(electionData.checklist.length).toBeGreaterThan(5);
+    });
+
+test('should have valid checklist items', () => {
+      expect(electionData).toHaveProperty('checklist');
+      expect(Array.isArray(electionData.checklist)).toBe(true);
+      expect(electionData.checklist.length).toBeGreaterThan(5);
     });
   });
 
@@ -57,8 +63,7 @@ describe('Integration Tests', () => {
       ];
 
       requiredFiles.forEach(file => {
-        const filePath = path.join(__dirname, '..', file);
-        expect(fs.existsSync(filePath)).toBe(true);
+        expect(fs.existsSync(path.join(process.cwd(), file))).toBe(true);
       });
     });
 
@@ -71,15 +76,14 @@ describe('Integration Tests', () => {
       ];
 
       cssFiles.forEach(file => {
-        const filePath = path.join(__dirname, '..', file);
-        expect(fs.existsSync(filePath)).toBe(true);
+        expect(fs.existsSync(path.join(process.cwd(), file))).toBe(true);
       });
     });
   });
 
   describe('Build Integration', () => {
     test('should have valid package.json', () => {
-      const pkgPath = path.join(__dirname, '..', 'package.json');
+      const pkgPath = path.join(process.cwd(), 'package.json');
       const pkgData = fs.readFileSync(pkgPath, 'utf-8');
       const pkg = JSON.parse(pkgData);
 
@@ -89,12 +93,12 @@ describe('Integration Tests', () => {
     });
 
     test('should have valid vite.config.js', () => {
-      const configPath = path.join(__dirname, '..', 'vite.config.js');
+      const configPath = path.join(process.cwd(), 'vite.config.js');
       expect(fs.existsSync(configPath)).toBe(true);
     });
 
     test('should have firebase configuration', () => {
-      const configPath = path.join(__dirname, '..', 'firebase.json');
+      const configPath = path.join(process.cwd(), 'firebase.json');
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config).toHaveProperty('hosting');
