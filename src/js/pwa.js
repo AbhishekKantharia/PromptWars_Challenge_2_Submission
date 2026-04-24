@@ -3,7 +3,6 @@ let wasOnline = navigator.onLine;
 
 function updateOnlineStatus() {
   const isOnline = navigator.onLine;
-  const container = document.getElementById('toast-container');
   if (!isOnline && wasOnline) {
     showToast('You are offline. Some features may be limited.', 'warning', 0);
   } else if (isOnline && !wasOnline) {
