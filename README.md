@@ -18,6 +18,11 @@ It creates an "assistant that helps users understand the election process, timel
 - **Firebase Analytics:** Event tracking to monitor user engagement across the timeline, quiz, and chatbot.
 - **Firebase Hosting:** Fast, secure CDN deployment with robust Content Security Policy (CSP).
 
+## PWA Features
+- **Offline Support:** Works offline with cached content via Service Worker.
+- **Installable:** Installable as a standalone app on mobile and desktop.
+- **Manifest:** Web App Manifest for installability.
+
 ## Accessibility (WCAG 2.1 AA)
 The application is built completely inclusive:
 - Semantic HTML tags and comprehensive ARIA labeling.
