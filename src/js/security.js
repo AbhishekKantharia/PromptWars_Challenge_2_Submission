@@ -59,7 +59,7 @@ export function sanitizeInput(input) {
 }
 
 /**
- * Validates that a string does not exceed maximun length.
+ * Validates that a string does not exceed maximum length.
  *
  * @param {string} input - The input string to validate.
  * @param {number} maxLength - Maximum allowed length.
@@ -91,7 +91,7 @@ export function escapeRegExp(str) {
  *
  * @param {number} maxCalls - Maximum number of calls allowed in the time window.
  * @param {number} windowMs - Time window in milliseconds.
- * @returns {Object} Rate limiter with `tryCall()` and `reset()` methods.
+ * @returns {Object} Rate limiter with `tryCall()`, `reset()`, and `remaining()` methods.
  *
  * @example
  * const limiter = createRateLimiter(5, 60000); // 5 calls per minute

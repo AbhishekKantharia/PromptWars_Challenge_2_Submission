@@ -74,7 +74,7 @@ async function initApp() {
 function setupNavigation() {
   const navLinks = document.querySelectorAll('.nav-link');
   navLinks.forEach((link) => {
-    link.addEventListener('click', (e) => {
+    link.addEventListener('click', () => {
       // Close mobile menu when a link is clicked
       const menu = document.getElementById('nav-menu');
       const toggle = document.getElementById('nav-toggle');
@@ -102,7 +102,6 @@ function setupNavigation() {
  */
 function setupAuthUI() {
   const authButton = document.getElementById('auth-button');
-  const userAvatar = document.getElementById('user-avatar');
 
   if (authButton) {
     authButton.addEventListener('click', async () => {
@@ -251,11 +250,10 @@ const TOAST_TIMEOUT = 5000;
 
 /**
  * Sets up the toast notification system.
+ * Note: Toast container already exists in HTML.
  * @private
  */
-function setupToasts() {
-  // Toast container already exists in HTML
-}
+function setupToasts() {}
 
 /**
  * Shows a toast notification.

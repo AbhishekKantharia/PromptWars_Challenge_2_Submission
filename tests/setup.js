@@ -47,7 +47,82 @@ const localStorageMock = (() => {
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
+// Mock firebase/app
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn().mockReturnValue({})
+}));
+
+// Mock firebase/auth
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn().mockReturnValue({}),
+  connectAuthEmulator: jest.fn(),
+  onAuthStateChanged: jest.fn().mockImplementation((auth, callback) => {
+    callback(null);
+    return jest.fn();
+  }),
+  GoogleAuthProvider: class {},
+  signInWithPopup: jest.fn(),
+  signInAnonymously: jest.fn(),
+  signOut: jest.fn()
+}));
+
+// Mock firebase/firestore
+jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn().mockReturnValue({}),
+  connectFirestoreEmulator: jest.fn(),
+  collection: jest.fn(),
+  doc: jest.fn(),
+  addDoc: jest.fn(),
+  getDoc: jest.fn(),
+  getDocs: jest.fn(),
+  setDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  orderBy: jest.fn(),
+  limit: jest.fn(),
+  serverTimestamp: jest.fn()
+}));
+
+// Mock firebase/analytics
+jest.mock('firebase/analytics', () => ({
+  getAnalytics: jest.fn().mockReturnValue({}),
+  isSupported: jest.fn().mockResolvedValue(true),
+  logEvent: jest.fn()
+}));
+
+// Mock @google/generative-ai
+jest.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: class {
+    constructor() {}
+    getGenerativeModel() {
+      return {
+        startChat: () => ({
+          sendMessage: jest.fn().mockResolvedValue({
+            response: { text: () => 'Mock AI response' }
+          })
+        })
+      };
+    }
+  }
+}));
+
 // Suppress console.error in tests unless debugging
 if (!process.env.DEBUG_TESTS) {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 }
+
+// Mock Vite import.meta.env
+Object.defineProperty(globalThis, 'import', {
+  value: {
+    meta: {
+      env: {
+        VITE_FIREBASE_API_KEY: 'test_key',
+        VITE_FIREBASE_PROJECT_ID: 'test_id',
+        VITE_GEMINI_API_KEY: 'test_gemini',
+        DEV: true
+      }
+    }
+  },
+  writable: true
+});

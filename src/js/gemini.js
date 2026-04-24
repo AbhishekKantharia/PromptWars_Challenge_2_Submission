@@ -5,8 +5,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { sanitizeInput } from './security.js';
-import { createRateLimiter } from './security.js';
+import { sanitizeInput, createRateLimiter } from './security.js';
 
 /** @type {import('@google/generative-ai').GenerativeModel|null} */
 let model = null;

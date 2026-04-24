@@ -13,7 +13,16 @@ export default {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss)$': '<rootDir>/tests/__mocks__/styleMock.js',
-    '\\.(json)$': '<rootDir>/tests/__mocks__/jsonMock.js'
+    '\\.(json)$': '<rootDir>/tests/__mocks__/jsonMock.js',
+    '^./firebase-config.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
+    '^\\.\\./firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
+    '^\\.\\.\\./firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
+    '\\./election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
+    '\\.\\./election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
+    '\\.\\.\\./election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
+    '^@google/generative-ai$': '<rootDir>/tests/__mocks__/generative-ai.js',
+    '^\\.\\./gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js',
+    '^\\.\\.\\./gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js'
   },
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover'],

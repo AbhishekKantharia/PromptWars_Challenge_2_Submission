@@ -178,7 +178,8 @@ async function loadProgress() {
       if (local) {
         checklistState = JSON.parse(local);
       }
-    } catch {
+    } catch (error) {
+      console.error('[Checklist] Failed to parse localStorage progress:', error.message);
       checklistState = {};
     }
   }

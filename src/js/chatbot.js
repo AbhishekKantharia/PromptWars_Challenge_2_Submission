@@ -4,7 +4,7 @@
  * @module chatbot
  */
 
-import { sendMessage, resetChat, isGeminiReady } from './gemini.js';
+import { sendMessage, resetChat } from './gemini.js';
 import { sanitizeHTML, sanitizeInput, validateLength } from './security.js';
 import { announce, createFocusTrap } from './accessibility.js';
 import { trackChatInteraction } from './analytics.js';

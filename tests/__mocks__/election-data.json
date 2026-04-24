@@ -1,0 +1,38 @@
+module.exports = {
+  glossary: [
+    {
+      id: 'epic',
+      term: 'EPIC',
+      abbreviation: 'Elector Photo Identity Card',
+      definition: 'The Voter ID card issued by the Election Commission of India.',
+      category: 'voter-registration',
+      extra: 'Issued after successful registration on electoral roll.'
+    }
+  ],
+  quiz: {
+    questions: [
+      {
+        id: 'q1',
+        category: 'voting',
+        difficulty: 'beginner',
+        question: 'What does EVM stand for?',
+        options: ['Electronic Voting Machine', 'Extra Voter Movement', 'Election Verification Method', 'Electronic Voter Module'],
+        correct: 0,
+        explanation: 'EVM stands for Electronic Voting Machine, used in Indian elections since 1982.'
+      }
+    ]
+  },
+  checklist: [
+    {
+      id: 'voter-id',
+      title: 'Voter ID Card',
+      description: 'Ensure you have your EPIC (Voter ID) ready.',
+      icon: '🪪',
+      link: 'https://voters.eci.gov.in/',
+      linkText: 'Apply for Voter ID'
+    }
+  ],
+  timeline: {
+    phases: []
+  }
+};

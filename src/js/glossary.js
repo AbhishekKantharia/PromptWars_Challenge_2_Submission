@@ -5,8 +5,7 @@
  */
 
 import electionData from '../data/election-data.json';
-import { sanitizeHTML, sanitizeInput, escapeRegExp } from './security.js';
-import { debounce } from './security.js';
+import { sanitizeHTML, sanitizeInput, escapeRegExp, debounce } from './security.js';
 import { announce } from './accessibility.js';
 import { trackGlossaryLookup } from './analytics.js';
 
