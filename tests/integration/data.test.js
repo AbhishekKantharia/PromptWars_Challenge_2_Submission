@@ -1,11 +1,7 @@
-import { jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 describe('Integration Tests', () => {
+  const path = require('path');
+  const fs = require('fs');
+
   describe('Election Data Integration', () => {
     let electionData;
 
