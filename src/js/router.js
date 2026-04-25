@@ -77,6 +77,12 @@ export function navigateTo(page) {
   // Update page visibility
   updatePageVisibility(previousPage, page);
 
+  // Remove hidden attribute for proper CSS display handling
+  const newSection = document.getElementById(`page-${page}`);
+  if (newSection && newSection.hasAttribute('hidden')) {
+    newSection.removeAttribute('hidden');
+  }
+
   // Update navigation active state
   updateNavigation(page);
 

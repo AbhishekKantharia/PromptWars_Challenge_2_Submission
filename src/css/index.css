@@ -611,6 +611,11 @@ img {
   display: block;
 }
 
+.page[hidden],
+.page.hidden {
+  display: none !important;
+}
+
 .page-container {
   max-width: var(--max-width);
   margin: 0 auto;
