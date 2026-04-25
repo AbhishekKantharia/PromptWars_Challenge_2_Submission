@@ -65,11 +65,13 @@ function setupTabNavigation() {
 export function renderTimeline(type) {
   const container = document.getElementById('timeline-container');
   if (!container) {
+    console.error('[Timeline] Container not found');
     return;
   }
 
   const phases = electionData.timeline[type];
   if (!phases) {
+    console.error('[Timeline] No data for type:', type);
     container.innerHTML = '<p>Timeline data not available.</p>';
     return;
   }
@@ -77,11 +79,13 @@ export function renderTimeline(type) {
   container.innerHTML = phases.map((phase, index) => createTimelineItem(phase, index)).join('');
 
   // Immediately show all items (IntersectionObserver doesn't catch dynamically added elements)
-  setTimeout(() => {
-    container.querySelectorAll('.fade-in-up').forEach((el) => {
+  requestAnimationFrame(() => {
+    const items = container.querySelectorAll('.fade-in-up');
+    console.log('[Timeline] Rendered', items.length, 'items for', type);
+    items.forEach((el) => {
       el.classList.add('visible');
     });
-  }, 50);
+  });
 
   // Attach click handlers for expanding/collapsing details
   container.querySelectorAll('.timeline-card').forEach((card, index) => {
