@@ -154,6 +154,13 @@ export function renderGlossary() {
     });
   });
 
+  // Make newly rendered cards visible
+  requestAnimationFrame(() => {
+    grid.querySelectorAll('.glossary-card').forEach((card) => {
+      card.classList.add('visible');
+    });
+  });
+
   announce(`${filteredTerms.length} glossary terms displayed`);
 }
 
