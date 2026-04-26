@@ -37,12 +37,21 @@ function setupRouterDOM() {
 }
 
 describe('Router Module - Full Coverage', () => {
+  // Force-reset the module-level currentPage before each test
+  // by directly calling navigateTo to a known different page,
+  // then we can navigate to our target in each test.
   beforeEach(() => {
     setupRouterDOM();
     jest.useFakeTimers();
     jest.clearAllMocks();
-    // Navigate to a known non-home page first so 'home' navigation is valid
     window.location.hash = '';
+    // Navigate to 'checklist' so all subsequent navigateTo calls
+    // from a 'home', 'timeline', 'quiz', 'glossary' starting point work.
+    // We do this silently by temporarily removing the guard.
+    // The cleanest way: navigate to checklist (unlikely to be the test target)
+    // This resets currentPage to a known state.
+    navigateTo('checklist');
+    jest.clearAllMocks(); // clear calls from the setup navigation
   });
 
   afterEach(() => {
@@ -109,6 +118,8 @@ describe('Router Module - Full Coverage', () => {
     });
 
     it('shows the target page section', () => {
+      setupRouterDOM(); // fresh DOM for this test
+      // currentPage is 'checklist' from beforeEach, navigate to timeline
       navigateTo('timeline');
       const timelinePage = document.getElementById('page-timeline');
       expect(timelinePage.hidden).toBe(false);
@@ -177,8 +188,9 @@ describe('Router Module - Full Coverage', () => {
     it('registers a route change listener', () => {
       const callback = jest.fn();
       onRouteChange(callback);
-      navigateTo('quiz');
-      expect(callback).toHaveBeenCalledWith('quiz', expect.any(String));
+      // Navigate to a page different from current ('checklist' set in beforeEach)
+      navigateTo('home');
+      expect(callback).toHaveBeenCalledWith('home', expect.any(String));
     });
 
     it('returns an unsubscribe function', () => {
@@ -191,7 +203,8 @@ describe('Router Module - Full Coverage', () => {
       const callback = jest.fn();
       const unsubscribe = onRouteChange(callback);
       unsubscribe();
-      navigateTo('glossary');
+      // Navigate to a page different from 'checklist' (the current state)
+      navigateTo('timeline');
       expect(callback).not.toHaveBeenCalled();
     });
 
@@ -206,7 +219,8 @@ describe('Router Module - Full Coverage', () => {
       const cb2 = jest.fn();
       onRouteChange(cb1);
       onRouteChange(cb2);
-      navigateTo('checklist');
+      // 'checklist' is already current, must navigate to a different page
+      navigateTo('timeline');
       expect(cb1).toHaveBeenCalled();
       expect(cb2).toHaveBeenCalled();
     });

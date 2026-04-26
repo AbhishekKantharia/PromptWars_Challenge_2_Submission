@@ -13,15 +13,14 @@ export default {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss)$': '<rootDir>/tests/__mocks__/styleMock.js',
-    '^./firebase-config.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
-    '^\\.\\./firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
-    '^\\.\\.\\./firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
-    '\\./election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
-    '\\.\\./election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
-    '\\.\\.\\./election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
+    // Map firebase-config.js from ANY relative path to the mock
+    'firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
+    // Map election-data.json from any depth
+    'election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
+    // Map generative-ai
     '^@google/generative-ai$': '<rootDir>/tests/__mocks__/generative-ai.js',
-    '^\\.\\./gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js',
-    '^\\.\\.\\./gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js'
+    // Map gemini.js from any relative path
+    'gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js'
   },
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover', 'html'],

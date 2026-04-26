@@ -60,28 +60,30 @@ jest.mock('firebase/auth', () => ({
     callback(null);
     return jest.fn();
   }),
-  GoogleAuthProvider: class {},
-  signInWithPopup: jest.fn(),
-  signInAnonymously: jest.fn(),
-  signOut: jest.fn()
+  GoogleAuthProvider: class {
+    addScope() {}
+  },
+  signInWithPopup: jest.fn().mockResolvedValue(null),
+  signInAnonymously: jest.fn().mockResolvedValue(null),
+  signOut: jest.fn().mockResolvedValue(null)
 }));
 
 // Mock firebase/firestore
 jest.mock('firebase/firestore', () => ({
   getFirestore: jest.fn().mockReturnValue({}),
   connectFirestoreEmulator: jest.fn(),
-  collection: jest.fn(),
-  doc: jest.fn(),
-  addDoc: jest.fn(),
-  getDoc: jest.fn(),
-  getDocs: jest.fn(),
-  setDoc: jest.fn(),
-  updateDoc: jest.fn(),
-  query: jest.fn(),
-  where: jest.fn(),
-  orderBy: jest.fn(),
-  limit: jest.fn(),
-  serverTimestamp: jest.fn()
+  collection: jest.fn().mockReturnValue('colRef'),
+  doc: jest.fn().mockReturnValue('docRef'),
+  addDoc: jest.fn().mockResolvedValue({ id: 'mock-doc-id' }),
+  getDoc: jest.fn().mockResolvedValue({ exists: () => false, data: () => ({}) }),
+  getDocs: jest.fn().mockResolvedValue({ docs: [] }),
+  setDoc: jest.fn().mockResolvedValue(null),
+  updateDoc: jest.fn().mockResolvedValue(null),
+  query: jest.fn().mockReturnValue('queryRef'),
+  where: jest.fn().mockReturnValue('whereClause'),
+  orderBy: jest.fn().mockReturnValue('orderByClause'),
+  limit: jest.fn().mockReturnValue('limitClause'),
+  serverTimestamp: jest.fn().mockReturnValue('TIMESTAMP')
 }));
 
 // Mock firebase/analytics
@@ -107,9 +109,11 @@ jest.mock('@google/generative-ai', () => ({
   }
 }));
 
-// Suppress console.error in tests unless debugging
+// Suppress console noise in tests unless debugging
 if (!process.env.DEBUG_TESTS) {
   jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'info').mockImplementation(() => {});
 }
 
 // Mock Vite import.meta.env
@@ -118,6 +122,7 @@ Object.defineProperty(globalThis, 'import', {
     meta: {
       env: {
         VITE_FIREBASE_API_KEY: 'test_key',
+        VITE_FIREBASE_AUTH_DOMAIN: 'test.firebaseapp.com',
         VITE_FIREBASE_PROJECT_ID: 'test_id',
         VITE_GEMINI_API_KEY: 'test_gemini',
         DEV: true
