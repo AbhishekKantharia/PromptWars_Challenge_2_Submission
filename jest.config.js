@@ -13,7 +13,6 @@ export default {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss)$': '<rootDir>/tests/__mocks__/styleMock.js',
-    '\\.(json)$': '<rootDir>/tests/__mocks__/jsonMock.js',
     '^./firebase-config.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
     '^\\.\\./firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
     '^\\.\\.\\./firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
@@ -25,11 +24,20 @@ export default {
     '^\\.\\.\\./gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js'
   },
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'clover'],
+  coverageReporters: ['text', 'lcov', 'clover', 'html'],
   collectCoverageFrom: [
     'src/js/**/*.js',
-    '!src/js/firebase-config.js'
+    '!src/js/firebase-config.js',
+    '!src/js/pwa.js'
   ],
+  coverageThreshold: {
+    global: {
+      statements: 50,
+      branches: 40,
+      functions: 50,
+      lines: 50
+    }
+  },
   testMatch: [
     '<rootDir>/tests/**/*.test.js'
   ],
