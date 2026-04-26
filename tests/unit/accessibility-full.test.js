@@ -1,5 +1,7 @@
 /**
  * @fileoverview Comprehensive accessibility module tests.
+ * Targets all uncovered branches including focus trap Tab/Shift+Tab wrapping,
+ * arrow key navigation, IntersectionObserver callbacks, and counter animation.
  */
 
 import {
@@ -12,251 +14,396 @@ import {
   initCounterAnimations
 } from '../../src/js/accessibility.js';
 
-describe('Accessibility Module', () => {
+describe('Accessibility Module - Full Coverage', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     jest.clearAllMocks();
+    window.matchMedia = jest.fn().mockReturnValue({
+      matches: false, addListener: jest.fn(), removeListener: jest.fn(),
+      addEventListener: jest.fn(), removeEventListener: jest.fn()
+    });
   });
 
+  // ==================== announce ====================
   describe('announce', () => {
-    it('creates an aria-announcer element if not present', () => {
+    it('creates aria-announcer element if not present', () => {
       announce('Test message');
       expect(document.getElementById('aria-announcer')).not.toBeNull();
     });
 
-    it('sets the message content', () => {
+    it('sets textContent via rAF when mocked synchronously', () => {
+      const origRaf = window.requestAnimationFrame;
+      window.requestAnimationFrame = (cb) => cb();
       announce('Hello World');
-      const announcer = document.getElementById('aria-announcer');
-      expect(announcer).not.toBeNull();
+      expect(document.getElementById('aria-announcer').textContent).toBe('Hello World');
+      window.requestAnimationFrame = origRaf;
     });
 
     it('reuses existing announcer element', () => {
-      announce('First message');
-      announce('Second message');
-      const announcers = document.querySelectorAll('#aria-announcer');
-      expect(announcers.length).toBe(1);
+      announce('First');
+      announce('Second');
+      expect(document.querySelectorAll('#aria-announcer').length).toBe(1);
     });
 
     it('sets aria-live to polite by default', () => {
-      announce('Polite message');
-      const announcer = document.getElementById('aria-announcer');
-      expect(announcer.getAttribute('aria-live')).toBe('polite');
+      announce('Polite');
+      expect(document.getElementById('aria-announcer').getAttribute('aria-live')).toBe('polite');
     });
 
     it('sets aria-live to assertive when specified', () => {
-      announce('Urgent message', 'assertive');
-      const announcer = document.getElementById('aria-announcer');
-      expect(announcer.getAttribute('aria-live')).toBe('assertive');
+      announce('Urgent', 'assertive');
+      expect(document.getElementById('aria-announcer').getAttribute('aria-live')).toBe('assertive');
     });
 
-    it('has aria-atomic attribute', () => {
+    it('has aria-atomic="true"', () => {
       announce('Test');
-      const announcer = document.getElementById('aria-announcer');
-      expect(announcer.getAttribute('aria-atomic')).toBe('true');
+      expect(document.getElementById('aria-announcer').getAttribute('aria-atomic')).toBe('true');
     });
 
     it('has sr-only class', () => {
       announce('Test');
-      const announcer = document.getElementById('aria-announcer');
-      expect(announcer.classList.contains('sr-only')).toBe(true);
+      expect(document.getElementById('aria-announcer').classList.contains('sr-only')).toBe(true);
+    });
+
+    it('clears textContent before setting new message (rAF deferred)', () => {
+      window.requestAnimationFrame = () => { /* don't run cb */ };
+      announce('Clearing test');
+      expect(document.getElementById('aria-announcer').textContent).toBe('');
     });
   });
 
+  // ==================== moveFocus ====================
   describe('moveFocus', () => {
-    it('focuses a specified CSS selector element', () => {
-      document.body.innerHTML = '<button id="target-btn">Click</button>';
-      const btn = document.getElementById('target-btn');
+    it('focuses element by CSS selector', () => {
+      document.body.innerHTML = '<button id="t">Click</button>';
+      const btn = document.getElementById('t');
       btn.focus = jest.fn();
-      moveFocus('#target-btn');
+      moveFocus('#t');
       expect(btn.focus).toHaveBeenCalled();
     });
 
-    it('focuses an HTMLElement directly', () => {
-      document.body.innerHTML = '<input id="test-input" />';
-      const input = document.getElementById('test-input');
+    it('focuses HTMLElement directly', () => {
+      document.body.innerHTML = '<input id="i" />';
+      const input = document.getElementById('i');
       input.focus = jest.fn();
       moveFocus(input);
       expect(input.focus).toHaveBeenCalled();
     });
 
-    it('does nothing when target does not exist', () => {
+    it('does nothing for non-existent selector', () => {
       expect(() => moveFocus('#nonexistent')).not.toThrow();
     });
 
-    it('adds tabindex to non-focusable elements', () => {
-      document.body.innerHTML = '<div id="mydiv">Content</div>';
-      const div = document.getElementById('mydiv');
+    it('adds tabindex=-1 to non-focusable elements', () => {
+      document.body.innerHTML = '<div id="d">Content</div>';
+      const div = document.getElementById('d');
       div.focus = jest.fn();
       moveFocus(div);
       expect(div.getAttribute('tabindex')).toBe('-1');
     });
+
+    it('does not add tabindex to button elements', () => {
+      document.body.innerHTML = '<button id="b">Btn</button>';
+      const btn = document.getElementById('b');
+      btn.focus = jest.fn();
+      moveFocus(btn);
+      expect(btn.hasAttribute('tabindex')).toBe(false);
+    });
   });
 
+  // ==================== createFocusTrap ====================
   describe('createFocusTrap', () => {
-    it('returns an object with activate and deactivate methods', () => {
-      document.body.innerHTML = '<div id="trap"><button>Btn 1</button><button>Btn 2</button></div>';
-      const container = document.getElementById('trap');
-      const trap = createFocusTrap(container);
+    it('returns activate and deactivate methods', () => {
+      document.body.innerHTML = '<div id="trap"><button>B1</button><button>B2</button></div>';
+      const trap = createFocusTrap(document.getElementById('trap'));
       expect(typeof trap.activate).toBe('function');
       expect(typeof trap.deactivate).toBe('function');
     });
 
-    it('activates the focus trap', () => {
-      document.body.innerHTML = '<div id="trap"><button id="b1">Btn 1</button><button id="b2">Btn 2</button></div>';
-      const container = document.getElementById('trap');
-      const b1 = document.getElementById('b1');
-      b1.focus = jest.fn();
-      const trap = createFocusTrap(container);
-      expect(() => trap.activate()).not.toThrow();
+    it('activate focuses first focusable element', () => {
+      document.body.innerHTML = '<div id="trap"><button id="b1">B1</button><button id="b2">B2</button></div>';
+      const trap = createFocusTrap(document.getElementById('trap'));
+      trap.activate();
+      expect(document.activeElement.id).toBe('b1');
     });
 
-    it('deactivates the focus trap and restores focus', () => {
-      document.body.innerHTML = '<div id="trap"><button>Btn</button></div><button id="prev">Previous</button>';
-      const container = document.getElementById('trap');
-      const prevBtn = document.getElementById('prev');
-      prevBtn.focus = jest.fn();
-      document.activeElement; // reference
-      const trap = createFocusTrap(container);
+    it('deactivate restores previous focus', () => {
+      document.body.innerHTML = '<button id="prev">Prev</button><div id="trap"><button id="b1">B1</button></div>';
+      document.getElementById('prev').focus();
+      const trap = createFocusTrap(document.getElementById('trap'));
       trap.activate();
       trap.deactivate();
-      expect(true).toBe(true); // should not throw
+      expect(document.activeElement.id).toBe('prev');
     });
 
-    it('handles Tab key within trap', () => {
-      document.body.innerHTML = '<div id="trap"><button id="first">First</button><button id="last">Last</button></div>';
+    it('Tab key with no focusable elements — returns without error (line 93)', () => {
+      document.body.innerHTML = '<div id="trap"></div>';
       const container = document.getElementById('trap');
       const trap = createFocusTrap(container);
       trap.activate();
       const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
-      container.dispatchEvent(event);
-      expect(true).toBe(true);
+      expect(() => container.dispatchEvent(event)).not.toThrow();
     });
 
-    it('handles Shift+Tab key within trap', () => {
-      document.body.innerHTML = '<div id="trap"><button id="first">First</button><button id="last">Last</button></div>';
+    it('Tab key wraps from last to first (line 105-107)', () => {
+      document.body.innerHTML = '<div id="trap"><button id="b1">B1</button><button id="b2">B2</button></div>';
       const container = document.getElementById('trap');
       const trap = createFocusTrap(container);
       trap.activate();
-      const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true });
-      container.dispatchEvent(event);
-      expect(true).toBe(true);
+      document.getElementById('b2').focus(); // focus last
+      container.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: false, bubbles: true, cancelable: true })
+      );
+      expect(document.activeElement.id).toBe('b1');
+    });
+
+    it('Shift+Tab wraps from first to last (line 99-103)', () => {
+      document.body.innerHTML = '<div id="trap"><button id="b1">B1</button><button id="b2">B2</button></div>';
+      const container = document.getElementById('trap');
+      const trap = createFocusTrap(container);
+      trap.activate();
+      document.getElementById('b1').focus(); // focus first
+      container.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true })
+      );
+      expect(document.activeElement.id).toBe('b2');
+    });
+
+    it('non-Tab key ignored in trap', () => {
+      document.body.innerHTML = '<div id="trap"><button>B</button></div>';
+      const container = document.getElementById('trap');
+      const trap = createFocusTrap(container);
+      trap.activate();
+      expect(() => container.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+      )).not.toThrow();
     });
   });
 
+  // ==================== setupArrowKeyNavigation ====================
   describe('setupArrowKeyNavigation', () => {
-    it('navigates to next item with ArrowDown', () => {
-      document.body.innerHTML = `
-        <div id="nav-container">
-          <button class="nav-item">Item 1</button>
-          <button class="nav-item">Item 2</button>
-          <button class="nav-item">Item 3</button>
-        </div>`;
-      const container = document.getElementById('nav-container');
-      setupArrowKeyNavigation(container, '.nav-item');
-      const items = container.querySelectorAll('.nav-item');
-      items[0].focus();
-      const event = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true });
-      container.dispatchEvent(event);
-      expect(true).toBe(true);
+    function makeNav(n = 3) {
+      document.body.innerHTML = `<div id="nav">${
+        Array.from({ length: n }, (_, i) => `<button class="item" id="item${i}">Item ${i}</button>`).join('')
+      }</div>`;
+      return document.getElementById('nav');
+    }
+
+    it('ArrowDown moves to next item (line 158-160)', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item0').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      expect(document.activeElement.id).toBe('item1');
     });
 
-    it('navigates to previous item with ArrowUp', () => {
-      document.body.innerHTML = `<div id="nav-container">
-        <button class="item">A</button><button class="item">B</button>
-      </div>`;
-      const container = document.getElementById('nav-container');
-      setupArrowKeyNavigation(container, '.item');
-      const event = new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true });
-      container.dispatchEvent(event);
-      expect(true).toBe(true);
+    it('ArrowDown wraps from last to first', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item2').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      expect(document.activeElement.id).toBe('item0');
     });
 
-    it('navigates to first item with Home key', () => {
-      document.body.innerHTML = `<div id="nav-container">
-        <button class="item">A</button><button class="item">B</button>
-      </div>`;
-      const container = document.getElementById('nav-container');
-      const items = container.querySelectorAll('.item');
-      items[0].focus = jest.fn();
-      setupArrowKeyNavigation(container, '.item');
-      const event = new KeyboardEvent('keydown', { key: 'Home', bubbles: true });
-      container.dispatchEvent(event);
-      expect(true).toBe(true);
+    it('ArrowRight moves to next item', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item0').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      expect(document.activeElement.id).toBe('item1');
     });
 
-    it('navigates to last item with End key', () => {
-      document.body.innerHTML = `<div id="nav-container">
-        <button class="item">A</button><button class="item">B</button>
-      </div>`;
-      const container = document.getElementById('nav-container');
-      const items = container.querySelectorAll('.item');
-      const last = items[items.length - 1];
-      last.focus = jest.fn();
-      setupArrowKeyNavigation(container, '.item');
-      const event = new KeyboardEvent('keydown', { key: 'End', bubbles: true });
-      container.dispatchEvent(event);
-      expect(true).toBe(true);
+    it('ArrowUp moves to previous item (line 163-166)', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item2').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      expect(document.activeElement.id).toBe('item1');
     });
 
-    it('does nothing for non-navigation keys', () => {
-      document.body.innerHTML = `<div id="nav-container"><button class="item">A</button></div>`;
-      const container = document.getElementById('nav-container');
-      setupArrowKeyNavigation(container, '.item');
-      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-      expect(() => container.dispatchEvent(event)).not.toThrow();
+    it('ArrowUp wraps from first to last', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item0').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      expect(document.activeElement.id).toBe('item2');
     });
 
-    it('does nothing when focused element is not in the list', () => {
-      document.body.innerHTML = `<div id="nav-container"><button class="item">A</button></div><input id="outside" />`;
-      const container = document.getElementById('nav-container');
-      setupArrowKeyNavigation(container, '.item');
-      document.getElementById('outside').focus();
-      const event = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true });
-      expect(() => container.dispatchEvent(event)).not.toThrow();
+    it('ArrowLeft moves to previous item', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item2').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+      expect(document.activeElement.id).toBe('item1');
+    });
+
+    it('Home key moves to first item (line 168-171)', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item2').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      expect(document.activeElement.id).toBe('item0');
+    });
+
+    it('End key moves to last item (line 172-175)', () => {
+      const c = makeNav(3);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item0').focus();
+      c.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      expect(document.activeElement.id).toBe('item2');
+    });
+
+    it('non-navigation key does nothing', () => {
+      const c = makeNav(2);
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('item0').focus();
+      expect(() => c.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))).not.toThrow();
+    });
+
+    it('ignores event when focused element not in item list (line 149-151)', () => {
+      document.body.innerHTML = '<div id="nav"><button class="item">A</button></div><input id="out"/>';
+      const c = document.getElementById('nav');
+      setupArrowKeyNavigation(c, '.item');
+      document.getElementById('out').focus();
+      expect(() => c.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))).not.toThrow();
     });
   });
 
+  // ==================== prefersReducedMotion ====================
   describe('prefersReducedMotion', () => {
-    it('returns a boolean', () => {
-      const result = prefersReducedMotion();
-      expect(typeof result).toBe('boolean');
-    });
-
-    it('returns false when matchMedia reports no preference', () => {
+    it('returns false when matchMedia does not match', () => {
       expect(prefersReducedMotion()).toBe(false);
     });
+
+    it('returns true when matchMedia matches reduced motion', () => {
+      window.matchMedia = jest.fn().mockReturnValue({ matches: true });
+      expect(prefersReducedMotion()).toBe(true);
+    });
+
+    it('returns a boolean', () => {
+      expect(typeof prefersReducedMotion()).toBe('boolean');
+    });
   });
 
+  // ==================== initScrollReveal ====================
   describe('initScrollReveal', () => {
-    it('does not throw when called', () => {
-      document.body.innerHTML = '<div class="fade-in-up"></div>';
+    it('does not throw with no elements', () => {
       expect(() => initScrollReveal()).not.toThrow();
     });
 
-    it('makes elements visible immediately when reduced motion preferred', () => {
+    it('adds visible class immediately when reduced motion preferred (line 197-201)', () => {
       window.matchMedia = jest.fn().mockReturnValue({ matches: true });
+      document.body.innerHTML = '<div class="fade-in-up"></div><div class="stagger-children"></div>';
+      initScrollReveal();
+      document.querySelectorAll('.fade-in-up, .stagger-children').forEach(el => {
+        expect(el.classList.contains('visible')).toBe(true);
+      });
+    });
+
+    it('IntersectionObserver adds visible on intersection (line 206-209)', () => {
+      window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+      let cb = null;
+      globalThis.IntersectionObserver = class {
+        constructor(fn) { cb = fn; }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
       document.body.innerHTML = '<div class="fade-in-up"></div>';
       initScrollReveal();
       const el = document.querySelector('.fade-in-up');
+      cb([{ isIntersecting: true, target: el }]);
       expect(el.classList.contains('visible')).toBe(true);
-      // restore
+    });
+
+    it('IntersectionObserver ignores non-intersecting entries', () => {
       window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+      let cb = null;
+      globalThis.IntersectionObserver = class {
+        constructor(fn) { cb = fn; }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+      document.body.innerHTML = '<div class="fade-in-up"></div>';
+      initScrollReveal();
+      const el = document.querySelector('.fade-in-up');
+      cb([{ isIntersecting: false, target: el }]);
+      expect(el.classList.contains('visible')).toBe(false);
     });
   });
 
+  // ==================== initCounterAnimations ====================
   describe('initCounterAnimations', () => {
-    it('does not throw when no counter elements exist', () => {
-      document.body.innerHTML = '';
+    it('does not throw with no counter elements', () => {
       expect(() => initCounterAnimations()).not.toThrow();
     });
 
-    it('sets textContent immediately when reduced motion preferred', () => {
+    it('sets textContent immediately when reduced motion preferred (line 229-232)', () => {
       window.matchMedia = jest.fn().mockReturnValue({ matches: true });
       document.body.innerHTML = '<span class="stat-number" data-count="42"></span>';
       initCounterAnimations();
-      const counter = document.querySelector('.stat-number');
-      expect(counter.textContent).toBe('42');
+      expect(document.querySelector('.stat-number').textContent).toBe('42');
+    });
+
+    it('IntersectionObserver triggers animateCounter on intersection (lines 237-278)', () => {
       window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+      // Mock rAF to call cb with time past duration so counter reaches target immediately
+      const origRaf = window.requestAnimationFrame;
+      window.requestAnimationFrame = (cb) => cb(performance.now() + 5000);
+      let cb = null;
+      globalThis.IntersectionObserver = class {
+        constructor(fn) { cb = fn; }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+      document.body.innerHTML = '<span class="stat-number" data-count="100"></span>';
+      initCounterAnimations();
+      const counter = document.querySelector('.stat-number');
+      cb([{ isIntersecting: true, target: counter }]);
+      expect(counter.textContent).toBe('100');
+      window.requestAnimationFrame = origRaf;
+    });
+
+    it('IntersectionObserver ignores non-intersecting counter entries', () => {
+      window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+      let cb = null;
+      globalThis.IntersectionObserver = class {
+        constructor(fn) { cb = fn; }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+      document.body.innerHTML = '<span class="stat-number" data-count="50"></span>';
+      initCounterAnimations();
+      const counter = document.querySelector('.stat-number');
+      cb([{ isIntersecting: false, target: counter }]);
+      expect(counter.textContent).toBe('');
+    });
+
+    it('animateCounter shows intermediate values during animation', () => {
+      window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+      let callCount = 0;
+      const origRaf = window.requestAnimationFrame;
+      // First call: time at 0 (start), second call: past duration
+      window.requestAnimationFrame = (cb) => {
+        callCount++;
+        cb(callCount === 1 ? performance.now() : performance.now() + 5000);
+      };
+      let observerCb = null;
+      globalThis.IntersectionObserver = class {
+        constructor(fn) { observerCb = fn; }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+      document.body.innerHTML = '<span class="stat-number" data-count="200"></span>';
+      initCounterAnimations();
+      const counter = document.querySelector('.stat-number');
+      observerCb([{ isIntersecting: true, target: counter }]);
+      expect(counter.textContent).toBe('200');
+      window.requestAnimationFrame = origRaf;
     });
   });
 });

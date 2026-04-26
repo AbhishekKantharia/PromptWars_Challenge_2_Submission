@@ -9,12 +9,16 @@ describe('Accessibility Module', () => {
       expect(announcer).not.toBeNull();
     });
 
-    it('updates existing announcer with message', async () => {
+    it('updates existing announcer with message', () => {
+      // requestAnimationFrame in jsdom doesn't run automatically;
+      // mock it to execute the callback synchronously
+      const originalRaf = window.requestAnimationFrame;
+      window.requestAnimationFrame = (cb) => cb();
       document.body.innerHTML = '<div id="aria-announcer" aria-live="polite"></div>';
       announce('Test message');
-      await new Promise(resolve => setTimeout(resolve, 10));
       const announcer = document.getElementById('aria-announcer');
       expect(announcer.textContent).toBe('Test message');
+      window.requestAnimationFrame = originalRaf;
     });
 
     it('respects priority parameter', () => {

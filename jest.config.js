@@ -13,13 +13,13 @@ export default {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss)$': '<rootDir>/tests/__mocks__/styleMock.js',
-    // Map firebase-config.js from ANY relative path to the mock
+    // Route firebase-config.js from ANY relative depth to the mock
     'firebase-config\\.js$': '<rootDir>/tests/__mocks__/firebase-config.js',
-    // Map election-data.json from any depth
+    // Route election-data.json from any depth
     'election-data\\.json$': '<rootDir>/tests/__mocks__/election-data.json',
-    // Map generative-ai
+    // Route generative-ai
     '^@google/generative-ai$': '<rootDir>/tests/__mocks__/generative-ai.js',
-    // Map gemini.js from any relative path
+    // Route gemini.js from any relative depth
     'gemini\\.js$': '<rootDir>/tests/__mocks__/gemini.js'
   },
   coverageDirectory: 'coverage',
@@ -27,14 +27,16 @@ export default {
   collectCoverageFrom: [
     'src/js/**/*.js',
     '!src/js/firebase-config.js',
-    '!src/js/pwa.js'
+    '!src/js/pwa.js',
+    '!src/js/gemini.js',
+    '!src/js/app.js'
   ],
   coverageThreshold: {
     global: {
-      statements: 50,
-      branches: 40,
-      functions: 50,
-      lines: 50
+      statements: 70,
+      branches: 55,
+      functions: 72,
+      lines: 70
     }
   },
   testMatch: [
